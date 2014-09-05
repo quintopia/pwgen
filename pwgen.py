@@ -41,7 +41,7 @@ class pw_gen(Tk):
                 self.name.set(self.prevname)
             else:
                 self.optionList['menu'].insert_command(len(sites),label=sitename,command=lambda name=sitename: self.name.set(name))
-                sites[sitename]=Website(name=sitename,domain='',username='',length='10')
+                sites[sitename]=Website(name=sitename,domain='',username='',length='10',chars='-_.`~#%^&(){}\'!@*=+[]{}\\|;:",<>/?')
                 self.prevname = sitename
                 self.name.set(sitename)
                 self.domain.set('')
@@ -166,3 +166,14 @@ if __name__ == "__main__":
     app = pw_gen(None,sites)
     app.title('Deterministic Password Generator')
     app.mainloop()
+    
+'''
+try:
+            self.image = Image.open("emoji/monsters/1.gif")
+        except IOError:
+            tkMessageBox.showerror(
+                "Open file",
+                "No emoji available! Ensure there are images in the folders emoji/land and emoji/monsters"
+            )
+            return
+'''
