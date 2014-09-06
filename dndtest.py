@@ -56,6 +56,7 @@ class Dragged:
             self.id = self.original_id
             self.canvas.itemconfig(self.id,state=NORMAL)
             self.canvas.dnd_enter(self,event)
+            self.canvas.dnd_commit(self,event)
             return
         self.canvas.tag_bind(self.id,'<ButtonPress>',self.press)
         if self.original_canvas:
@@ -312,10 +313,16 @@ class CanvasDnd(Canvas):
             try:
                 x,y,_,_=self.coords('shadow')
             except ValueError:
-                #this means there was no shadow when dropping, which means a Dragged entered above a
+                #this either means there was no shadow when dropping, which means a Dragged entered above a
                 #non-empty square, which means we want to cancel our commitment to accept the drop
-                self.dnd_leave(source,event)
-                return
+                #or it means that something from this canvas was dropped in the middle of nowhere, which means it's
+                #already at the right coordinates and just needs to be added back to the grid
+                #to figure out which, we just check that its original_canvas is this one
+                if source.original_canvas is not None and source.original_canvas==self:
+                    x,y=self.coords(source.id)
+                else:
+                    self.dnd_leave(source,event)
+                    return
             xy=(x,y)
             source.set_pos(xy)
             #remove shadow
@@ -364,10 +371,10 @@ class Inventory(CanvasDnd):
                 self.left+=(obj.winfo_width()+5)
         
     def dnd_commit(self,source,event):
-        xy = self.left,5
-        source.set_pos(xy)
-        self.left+=source.winfo_width()+5
         if source not in self.objects:
+            xy = self.left,5
+            source.set_pos(xy)
+            self.left+=source.winfo_width()+5
             self.objects.append(source)
         
 
