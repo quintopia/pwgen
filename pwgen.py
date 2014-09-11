@@ -10,7 +10,7 @@ from hashlib import md5
 import random, csv
 import tkSimpleDialog
 import pyperclip
-import Tkdnd
+import dndtest
     
 class pw_gen(Tk):
     def __init__(self,parent,sites):
@@ -26,10 +26,47 @@ class pw_gen(Tk):
         m.update(self.username.get())
         m.update(self.password.get())
         random.seed(m.digest())
-        print random.randrange(1000)
-        print random.randrange(1000)
-        print random.randrange(1000)
-        
+        grid = [[0]*self.mapy for i in range(self.mapx)]
+        cumsum=-1
+        count=0
+        shift=0
+        #this is a bidirectional random walk, meaning each step can vary by no more than 1 in both the
+        #vertical and horizontal directions. it favors a lot of variety in numbers that appear by increasing
+        #the probability of stepping towards values not seen.  essentially, if the average of all values seen
+        #so far is low, it will usually try to step UP, while if the average of all values is high, it will
+        #usually try to step DOWN. The probability of trying to stay the same is always 1/4.
+        for i in range(self.mapx):
+            for j in range(self.mapy):
+                if cumsum>=0:
+                    avg = float(cumsum)/count
+                    test = random.uniform(0,5)
+
+                    if test<avg-0.75:
+                        shift = -1
+                    elif test>avg+0.75:
+                        shift = 1
+                    else:
+                        shift = 0
+                if i>0:
+                    newval=grid[i-1][j]+shift
+                    
+                    if j>0 and abs(grid[i][j-1]-newval)>1:
+                        newval = min(max(newval,grid[i][j-1]-1),grid[i][j-1]+1)
+                    newval = min(max(newval,0),5)
+                    cumsum += newval
+                elif j>0:
+                    newval=grid[i][j-1]+shift
+                    
+                    newval = min(max(newval,0),5)
+                    cumsum += newval
+                else:
+                    newval = random.randint(0,5)
+                    cumsum=newval
+                count+=1
+                grid[i][j]=newval
+        for line in grid:
+            print line
+        print '\n'
         self.savepw.config(state=NORMAL)
     
     def update_fields(self,*args):
@@ -151,7 +188,10 @@ class pw_gen(Tk):
         
         #Canvas to draw the map
         c=c+1
-        self.map = Canvas(self, height=300)
+        self.mapx = 11
+        self.mapy = 8
+        self.gridscale = 40
+        self.map = Canvas(self, width=self.gridscale*self.mapx, height=self.gridscale*self.mapy) #gridsize=self.gridscale
         self.map.grid(column=0, row=c, columnspan=2, sticky='EW')
         self.name.set(sitelist[0]) #pick the option LAST so that the call to update_fields works
         

@@ -6,7 +6,7 @@ This code demonstrates a real-world drag and drop.
 
 from Tkinter import *
 import Tkdnd
-from PIL import Image,ImageTk
+from PIL import Image,ImageTk,ImageDraw,ImageFilter
 
 def mouse_in_widget(Widget,event):
     """
@@ -26,6 +26,26 @@ def mouse_in_item(canvas,ID,event):
     x = event.x_root - x1
     y = event.y_root - y1
     return (x,y)
+    
+def background_map(grid,gridscale):
+    """
+    This takes a grid of "land types" (integers) and renders a PIL Image:
+    0 - water #46987f
+    1 - sand #b57345
+    2 - clay #a36244
+    3 - grass #9aa035
+    4 - tree #5f6e2e
+    5 - rock/mountain #565888
+    """
+    colors = [(70,152,127),(181,115,69),(163,98,68),(154,160,53),(95,110,46),(86,88,136)]
+    dim = (len(grid)*gridscale,len(grid[0])*gridscale)
+    im = Image.new("RGB",dim)
+    draw = ImageDraw.Draw(im)
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            draw.rectangle([i*gridscale,j*gridscale,(i+1)*gridscale,(j+1)*gridscale,fill=colors[grid[i][j]])
+    im = im.filter(ImageFilter.GaussianBlur(5))
+    return im
     
 class Dragged:
     """
@@ -194,6 +214,7 @@ class CanvasDnd(Canvas):
     def __init__(self, master, *args, **kw):
         if kw.has_key('gridsize'):
             self.gridsize=kw['gridsize']
+            del kw['gridsize']
         else:
             self.gridsize=40
         cnf = {}
