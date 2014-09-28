@@ -242,13 +242,120 @@ class CanvasDnd(Canvas):
             kw['width']=gridx*self.gridsize
             kw['height']=gridy*self.gridsize
         Canvas.__init__(self, master, kw)
+
+
+    def draw_map(self,images,random):
+        
+        #first generate the color grid
+        
+        grid = [[0]*self.mapy for i in range(self.mapx)]
+        cumsum=-1
+        count=0
+        shift=0
+        #this is a bidirectional random walk, meaning each step can vary by no more than 1 in both the
+        #vertical and horizontal directions. it favors a lot of variety in numbers that appear by increasing
+        #the probability of stepping towards values not seen.  essentially, if the average of all values seen
+        #so far is low, it will usually try to step UP, while if the average of all values is high, it will
+        #usually try to step DOWN. The probability of trying to stay the same is always 1/4.
+        for i in range(self.mapx):
+            for j in range(self.mapy):
+                if cumsum>=0:
+                    avg = float(cumsum)/count
+                    test = random.uniform(0,5)
+
+                    if test<avg-0.75:
+                        shift = -1
+                    elif test>avg+0.75:
+                        shift = 1
+                    else:
+                        shift = 0
+                if i>0:
+                    newval=grid[i-1][j]+shift
+                    
+                    if j>0 and abs(grid[i][j-1]-newval)>1:
+                        newval = min(max(newval,grid[i][j-1]-1),grid[i][j-1]+1)
+                    newval = min(max(newval,0),5)
+                    cumsum += newval
+                elif j>0:
+                    newval=grid[i][j-1]+shift
+                    
+                    newval = min(max(newval,0),5)
+                    cumsum += newval
+                else:
+                    newval = random.randint(0,5)
+                    cumsum=newval
+                count+=1
+                grid[i][j]=newval
+        #first we draw in the background colors
+        
+        self.imagetk[0] = ImageTk.PhotoImage(background_map(grid,self.gridsize))
+        self.create_image((0,0),image=self.imagetk[0])
+        #easiest to just assume we only get four land images
+        
+        #first, put the images in the four corners of the canvas
+        imageloc[0][0] = 0
+        imageloc[0][1] = 0
+        
+        imageloc[1][0] = self.winfo_width - images[1].size[0]
+        imageloc[1][1] = 0
+        
+        imageloc[2][0] = 0
+        imageloc[2][1] = self.winfo_height - images[2].size[1]
+        
+        imageloc[3][0] = self.winfo_width - images[3].size[0]
+        imageloc[3][1] = self.winfo_height - images[3].size[1]
+        
+        #now, repeatedly
+        for i in range(50):
+            #for each image
+            for j in range(len(images)):
+                #find how far it could move in each direction
+                #start it out with the distance to the left edge of the canvas, etc.
+                margin[0] = imageloc[j][0]
+                margin[1] = self.winfo_width-(imageloc[j][0]+images[j].size[0])
+                margin[2] = imageloc[j][1]
+                margin[3] = self.winfo_height-(imageloc[j][1]+images[j].size[1])
+                
+                #for each other image
+                for k in [x for x in xrange(len(images)) if x!=j]:
+                    #see if the kth one starts above where this one ends AND ends above where this one starts
+                    if imageloc[k][1]<(imageloc[j][1]+images[j].size[1]) and (imageloc[k][1]+images[k].size[1])>imageloc[j][1]:
+                        #if it's to the left, see if we need to reduce the leftmargin
+                        if imageloc[k][0] < imageloc[j][0] and imageloc[j][0]-(imageloc[k][0]+images[k].size[0])<margin[0]:
+                            margin[0] = imageloc[j][0]-(imageloc[k][0]+images[k].size[0])
+                        #if it's to the right, see if we need to reduce the rightmargin
+                        if imageloc[k][0] > (imageloc[j][0]+images[j].size[0]) and imagloc[k][0]-(imageloc[j][0]+images[j].size[0])<margin[1]:
+                            margin[1] = imagloc[k][0]-(imageloc[j][0]+images[j].size[0])
+                    #see if the kth one starts to the left of where this one ends AND ends to the right of where this one starts 
+                    if imageloc[k][0]<(imageloc[j][0]+images[j].size[0]) and (imageloc[k][0]+images[k].size[0])>imageloc[j][0]:
+                        #if it's above, see if we need to reduce the topmargin
+                        if imageloc[k][1]<imageloc[j][1] and imageloc[j][1]-(imageloc[k][1]+images[k].size[1])<margin[2]:
+                            margin[2] = imageloc[j][1]-(imageloc[k][1]+images[k].size[1])
+                        #if it's below, see if we need to reduce the bottommargin
+                        if imageloc[k][1] > (imageloc[j][1]+images[j].size[1]) and imagloc[k][1]-(imageloc[j][1]+images[j].size[1])<margin[3]:
+                            margin[3] = imagloc[k][1]-(imageloc[j][1]+images[j].size[1])
+                            
+                #now, pick a direction for which the margin is positive
+                direction = random.choice([x for x in xrange(4) if margin[x]>0])
+                
+                #pick a random distance in that direction (within the margin)
+                distance = random.randint(0,margin[direction])
+                
+                #relocate!
+                if direction%2==0: distance=-distance
+                imageloc[j][direction//2]+=distance
+
+        #now we should have random non-overlapping locations for our images, so let's make them into photoimages and draw them
+        for i,im in enumerate(images):
+            self.imagetk[i+1] = ImageTk.PhotoImage(im)
+            self.create_image(tuple(imageloc[i]),image=self.imagetk[i+1])
+        
         #draw gridlines
         if self.drawgrid:
             for i in range(1,gridx):
                 self.create_line(self.gridsize*i,0,self.gridsize*i,gridy*self.gridsize,fill='gray')
             for i in range(1,gridy):
                 self.create_line(0,self.gridsize*i,gridx*self.gridsize,self.gridsize*i,fill='gray')
-
     #----- TargetWidget functionality -----
     
     def dnd_accept(self,source,event):

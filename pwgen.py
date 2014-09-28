@@ -26,44 +26,8 @@ class pw_gen(Tk):
         m.update(self.username.get())
         m.update(self.password.get())
         random.seed(m.digest())
-        grid = [[0]*self.mapy for i in range(self.mapx)]
-        cumsum=-1
-        count=0
-        shift=0
-        #this is a bidirectional random walk, meaning each step can vary by no more than 1 in both the
-        #vertical and horizontal directions. it favors a lot of variety in numbers that appear by increasing
-        #the probability of stepping towards values not seen.  essentially, if the average of all values seen
-        #so far is low, it will usually try to step UP, while if the average of all values is high, it will
-        #usually try to step DOWN. The probability of trying to stay the same is always 1/4.
-        for i in range(self.mapx):
-            for j in range(self.mapy):
-                if cumsum>=0:
-                    avg = float(cumsum)/count
-                    test = random.uniform(0,5)
-
-                    if test<avg-0.75:
-                        shift = -1
-                    elif test>avg+0.75:
-                        shift = 1
-                    else:
-                        shift = 0
-                if i>0:
-                    newval=grid[i-1][j]+shift
-                    
-                    if j>0 and abs(grid[i][j-1]-newval)>1:
-                        newval = min(max(newval,grid[i][j-1]-1),grid[i][j-1]+1)
-                    newval = min(max(newval,0),5)
-                    cumsum += newval
-                elif j>0:
-                    newval=grid[i][j-1]+shift
-                    
-                    newval = min(max(newval,0),5)
-                    cumsum += newval
-                else:
-                    newval = random.randint(0,5)
-                    cumsum=newval
-                count+=1
-                grid[i][j]=newval
+        #TODO: find, choose, load four images from the lands folder
+        self.map.draw_map(images,random)
         for line in grid:
             print line
         print '\n'
