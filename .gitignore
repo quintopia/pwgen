@@ -38,3 +38,4 @@ Icon
 describe.py
 emoji/land/1.gif
 *.gif
+*.pyc
