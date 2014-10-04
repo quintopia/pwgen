@@ -8,15 +8,18 @@ except ImportError:
 from PIL import Image, ImageTk
 from hashlib import md5
 import random, csv
-import tkSimpleDialog
+import tkSimpleDialog, tkMessageBox
 import pyperclip
-import dndtest
+import os
+from mapcanvas import * 
     
 class pw_gen(Tk):
     def __init__(self,parent,sites):
         Tk.__init__(self,parent)
         self.parent = parent
         self.sites = sites
+        self.timer1 = None
+        self.timer2 = None
         self.initialize()
         
     def draw_map(self):
@@ -25,14 +28,34 @@ class pw_gen(Tk):
         m.update(self.domain.get())
         m.update(self.username.get())
         m.update(self.password.get())
-        random.seed(m.digest())
-        #TODO: find, choose, load four images from the lands folder
-        self.map.draw_map(images,random)
-        for line in grid:
-            print line
-        print '\n'
+        random.seed(int(m.hexdigest(),16))
+        lands = []
+        monsters = []
+        #TODO: add error checking to this I/O
+        landfiles = filter(lambda x: x.lower().endswith('gif') or x.lower().endswith('png'),os.listdir(os.path.join('emoji','land')))
+        monsterfiles = filter(lambda x: x.lower().endswith('gif') or x.lower().endswith('png'),os.listdir(os.path.join('emoji','monsters')))
+        for i in range(6):
+            filename = random.choice(landfiles)
+            lands.append(Image.open(os.path.join('emoji','land',filename)))
+            filename = random.choice(monsterfiles)
+            im = Image.open(os.path.join('emoji','monsters',filename))
+            #the image needs to remember its filename for hashing purposes
+            im.info['filename']=filename
+            monsters.append(im)
+        self.inventory.draw_inv(monsters)
+        self.map.draw_map(lands,random)
         self.savepw.config(state=NORMAL)
     
+    def reset_map(self):
+        self.map.reset()
+        self.inventory.reset()
+    
+    def wipe_map(self):
+        self.map.wipe()
+        self.inventory.wipe()
+        self.timer1 = None
+        self.timer2 = None
+        
     def update_fields(self,*args):
         if self.name.get() == self.prevname:
             return #do nothing if the selection did not change
@@ -51,6 +74,7 @@ class pw_gen(Tk):
                 self.chars.set('-_.`~#%^&(){}\'!@*=+[]{}\\|;:",<>/?')
                 self.optionList.update()
                 self.savepw.config(state=DISABLED)
+                self.wipe_map()
             return
         site = self.sites[self.name.get()]
         self.domain.set(site.domain)
@@ -60,6 +84,7 @@ class pw_gen(Tk):
         self.prevname = self.name.get()
         self.password.delete(0, END)
         self.savepw.config(state=DISABLED)
+        self.wipe_map()
         
     def save(self):
         with open("sites.csv", "wb") as sitefile:
@@ -70,15 +95,31 @@ class pw_gen(Tk):
         site = self.sites[self.name.get()]
         self.sites[self.name.get()] = site._replace(domain = self.domain.get(),username=self.username.get(),length=self.pw_length.get(),chars=self.chars.get())
         self.savepw.config(state=DISABLED)
+        self.wipe_map()
         
     def gen_pw(self):
         selector = "1234567890qwertyuuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"+self.chars.get()
         password=""
-        #todo:initialize rand seed from map data
+        m = md5()
+        m.update(self.name.get())
+        m.update(self.domain.get())
+        m.update(self.username.get())
+        m.update(self.password.get())
+        try:
+            m.update(self.map.extract_grid())
+        except IllegalStateError:
+            tkMessageBox.showerror("No Password Generated","The password cannot be generated until the map has been displayed. (Getting this error may indicate a software bug.)")
+            self.savepw.config(state=DISABLED)
+        random.seed(int(m.hexdigest(),16))
         for i in range(int(self.pw_length.get())):
             password=password+random.choice(selector)
         pyperclip.copy(password)
-        self.password.delete(0, END)
+        if self.timer1 is not None:
+            self.after_cancel(self.timer1)
+        if self.timer2 is not None:
+            self.after_cancel(self.timer2)
+        self.timer1 = self.after(60000,self.password.delete,0, END)
+        self.timer2 = self.after(60000,self.reset_map)
         
     def initialize(self):
         label=Label(self,anchor="w",text="Website Name:")
@@ -149,13 +190,19 @@ class pw_gen(Tk):
         self.savebutton.grid(column=0,row=c)
         self.exitbutton = Button(self, text="Quit", command=self.destroy)
         self.exitbutton.grid(column=1,row=c)
+        c=c+1
+        
+        #Canvas to draw the inventory
+        self.inventory = Inventory(self,relief=RAISED,bd=2,height=62)
+        self.inventory.grid(column=0, row=c, columnspan=2, sticky='EW')
+        c=c+1
         
         #Canvas to draw the map
-        c=c+1
         self.mapx = 11
         self.mapy = 8
         self.gridscale = 40
-        self.map = Canvas(self, width=self.gridscale*self.mapx, height=self.gridscale*self.mapy) #gridsize=self.gridscale
+        self.map = CanvasDnd(self, self.mapx, self.mapy, True,
+                    width=self.gridscale*self.mapx, height=self.gridscale*self.mapy)
         self.map.grid(column=0, row=c, columnspan=2, sticky='EW')
         self.name.set(sitelist[0]) #pick the option LAST so that the call to update_fields works
         

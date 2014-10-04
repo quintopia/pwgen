@@ -8,6 +8,10 @@ from Tkinter import *
 import Tkdnd
 from PIL import Image,ImageTk,ImageDraw,ImageFilter
 
+class IllegalStateError(AttributeError):
+    def __str__(self):
+        return "Tried to extract map data before drawing map."
+
 def mouse_in_widget(Widget,event):
     """
     Figure out where the cursor is with respect to a widget.
@@ -43,8 +47,8 @@ def background_map(grid,gridscale):
     draw = ImageDraw.Draw(im)
     for i in range(len(grid)):
         for j in range(len(grid[0])):
-            draw.rectangle([i*gridscale,j*gridscale,(i+1)*gridscale,(j+1)*gridscale,fill=colors[grid[i][j]])
-    im = im.filter(ImageFilter.GaussianBlur(5))
+            draw.rectangle([i*gridscale,j*gridscale,(i+1)*gridscale,(j+1)*gridscale],fill=colors[grid[i][j]])
+    im = im.filter(ImageFilter.GaussianBlur(20))
     return im
     
 class Dragged:
@@ -230,25 +234,49 @@ class CanvasDnd(Canvas):
         else:
             self.drawgrid = args[2]
         if len(args)<2:
-            gridy = 1
+            self.gridy = 1
         else:
-            gridy = args[1]
+            self.gridy = args[1]
         if len(args)<1:
-            gridx = 3
+            self.gridx = 3
         else:
-            gridx = args[0]
+            self.gridx = args[0]
         if self.drawgrid:
-            self.grid = [[None]*5 for i in range(5)]
-            kw['width']=gridx*self.gridsize
-            kw['height']=gridy*self.gridsize
+            self.mygrid = [[None]*self.gridy for i in range(self.gridx)]
+            kw['width']=self.gridx*self.gridsize
+            kw['height']=self.gridy*self.gridsize
+        self.imagetk = []
         Canvas.__init__(self, master, kw)
 
+    #a function to turn the contents of the grid into a string deterministically
+    def extract_grid(self):
+        out = ""
+        if not self.drawgrid:
+            raise IllegalStateError(grid)
+        for i in range(self.gridx):
+            for j in range(self.gridy):
+                if self.mygrid[i][j] is not None:
+                    out+=str(i)+","+str(j)+","+self.mygrid[i][j].image.info['filename']+";"
+        return out
+    
+    def reset(self):
+        if not self.drawgrid:
+            raise IllegalStateError(grid)
+        for i in range(self.gridx):
+            for j in range(self.gridy):
+                if self.mygrid[i][j] is not None:
+                    self.mygrid[i][j].vanish(all=True)
+                    self.mygrid[i][j] = None
+                    
+    def wipe(self):
+        self.reset()
+        self.delete("all")
 
+    #a function to draw all the background stuff onto the canvas.
     def draw_map(self,images,random):
-        
+        self.imagetk = []
         #first generate the color grid
-        
-        grid = [[0]*self.mapy for i in range(self.mapx)]
+        grid = [[0]*self.gridy for i in range(self.gridx)]
         cumsum=-1
         count=0
         shift=0
@@ -257,8 +285,8 @@ class CanvasDnd(Canvas):
         #the probability of stepping towards values not seen.  essentially, if the average of all values seen
         #so far is low, it will usually try to step UP, while if the average of all values is high, it will
         #usually try to step DOWN. The probability of trying to stay the same is always 1/4.
-        for i in range(self.mapx):
-            for j in range(self.mapy):
+        for i in range(self.gridx):
+            for j in range(self.gridy):
                 if cumsum>=0:
                     avg = float(cumsum)/count
                     test = random.uniform(0,5)
@@ -287,23 +315,17 @@ class CanvasDnd(Canvas):
                 count+=1
                 grid[i][j]=newval
         #first we draw in the background colors
-        
-        self.imagetk[0] = ImageTk.PhotoImage(background_map(grid,self.gridsize))
-        self.create_image((0,0),image=self.imagetk[0])
-        #easiest to just assume we only get four land images
-        
+        self.imagetk.append(ImageTk.PhotoImage(background_map(grid,self.gridsize)))
+        self.create_image((0,0),image=self.imagetk[0],anchor=NW)
+        #six land images in four corners and then SE of the NW one and SW of the NE one
         #first, put the images in the four corners of the canvas
-        imageloc[0][0] = 0
-        imageloc[0][1] = 0
+        imageloc = [[0,0],
+                    [self.winfo_width() - images[1].size[0],0],
+                    [0,self.winfo_height() - images[2].size[1]],
+                    [self.winfo_width() - images[3].size[0],self.winfo_height() - images[3].size[1]],
+                    [images[0].size[0],images[0].size[1]],
+                    [self.winfo_width() - images[1].size[0]-images[5].size[0],images[1].size[1]]]
         
-        imageloc[1][0] = self.winfo_width - images[1].size[0]
-        imageloc[1][1] = 0
-        
-        imageloc[2][0] = 0
-        imageloc[2][1] = self.winfo_height - images[2].size[1]
-        
-        imageloc[3][0] = self.winfo_width - images[3].size[0]
-        imageloc[3][1] = self.winfo_height - images[3].size[1]
         
         #now, repeatedly
         for i in range(50):
@@ -311,10 +333,10 @@ class CanvasDnd(Canvas):
             for j in range(len(images)):
                 #find how far it could move in each direction
                 #start it out with the distance to the left edge of the canvas, etc.
-                margin[0] = imageloc[j][0]
-                margin[1] = self.winfo_width-(imageloc[j][0]+images[j].size[0])
-                margin[2] = imageloc[j][1]
-                margin[3] = self.winfo_height-(imageloc[j][1]+images[j].size[1])
+                margin = [imageloc[j][0],
+                          self.winfo_width()-(imageloc[j][0]+images[j].size[0]),
+                          imageloc[j][1],
+                          self.winfo_height()-(imageloc[j][1]+images[j].size[1])]
                 
                 #for each other image
                 for k in [x for x in xrange(len(images)) if x!=j]:
@@ -324,16 +346,16 @@ class CanvasDnd(Canvas):
                         if imageloc[k][0] < imageloc[j][0] and imageloc[j][0]-(imageloc[k][0]+images[k].size[0])<margin[0]:
                             margin[0] = imageloc[j][0]-(imageloc[k][0]+images[k].size[0])
                         #if it's to the right, see if we need to reduce the rightmargin
-                        if imageloc[k][0] > (imageloc[j][0]+images[j].size[0]) and imagloc[k][0]-(imageloc[j][0]+images[j].size[0])<margin[1]:
-                            margin[1] = imagloc[k][0]-(imageloc[j][0]+images[j].size[0])
+                        if imageloc[k][0] > (imageloc[j][0]+images[j].size[0]) and imageloc[k][0]-(imageloc[j][0]+images[j].size[0])<margin[1]:
+                            margin[1] = imageloc[k][0]-(imageloc[j][0]+images[j].size[0])
                     #see if the kth one starts to the left of where this one ends AND ends to the right of where this one starts 
                     if imageloc[k][0]<(imageloc[j][0]+images[j].size[0]) and (imageloc[k][0]+images[k].size[0])>imageloc[j][0]:
                         #if it's above, see if we need to reduce the topmargin
                         if imageloc[k][1]<imageloc[j][1] and imageloc[j][1]-(imageloc[k][1]+images[k].size[1])<margin[2]:
                             margin[2] = imageloc[j][1]-(imageloc[k][1]+images[k].size[1])
                         #if it's below, see if we need to reduce the bottommargin
-                        if imageloc[k][1] > (imageloc[j][1]+images[j].size[1]) and imagloc[k][1]-(imageloc[j][1]+images[j].size[1])<margin[3]:
-                            margin[3] = imagloc[k][1]-(imageloc[j][1]+images[j].size[1])
+                        if imageloc[k][1] > (imageloc[j][1]+images[j].size[1]) and imageloc[k][1]-(imageloc[j][1]+images[j].size[1])<margin[3]:
+                            margin[3] = imageloc[k][1]-(imageloc[j][1]+images[j].size[1])
                             
                 #now, pick a direction for which the margin is positive
                 direction = random.choice([x for x in xrange(4) if margin[x]>0])
@@ -347,15 +369,15 @@ class CanvasDnd(Canvas):
 
         #now we should have random non-overlapping locations for our images, so let's make them into photoimages and draw them
         for i,im in enumerate(images):
-            self.imagetk[i+1] = ImageTk.PhotoImage(im)
-            self.create_image(tuple(imageloc[i]),image=self.imagetk[i+1])
+            self.imagetk.append(ImageTk.PhotoImage(im))
+            self.create_image(tuple(imageloc[i]),image=self.imagetk[i+1],anchor=NW)
         
         #draw gridlines
         if self.drawgrid:
-            for i in range(1,gridx):
-                self.create_line(self.gridsize*i,0,self.gridsize*i,gridy*self.gridsize,fill='gray')
-            for i in range(1,gridy):
-                self.create_line(0,self.gridsize*i,gridx*self.gridsize,self.gridsize*i,fill='gray')
+            for i in range(1,self.gridx):
+                self.create_line(self.gridsize*i,0,self.gridsize*i,self.gridy*self.gridsize,fill='gray')
+            for i in range(1,self.gridy):
+                self.create_line(0,self.gridsize*i,self.gridx*self.gridsize,self.gridsize*i,fill='gray')
     #----- TargetWidget functionality -----
     
     def dnd_accept(self,source,event):
@@ -380,14 +402,14 @@ class CanvasDnd(Canvas):
             rectx=x-x%self.gridsize
             recty=y-y%self.gridsize
             #free up the grid for Dragged
-            if rectx/self.gridsize<len(self.grid) and recty/self.gridsize<len(self.grid[0]) and self.grid[rectx/self.gridsize][recty/self.gridsize]==source:
-                self.grid[rectx/self.gridsize][recty/self.gridsize]=None
+            if rectx/self.gridsize<len(self.mygrid) and recty/self.gridsize<len(self.mygrid[0]) and self.mygrid[rectx/self.gridsize][recty/self.gridsize]==source:
+                self.mygrid[rectx/self.gridsize][recty/self.gridsize]=None
             #redraw the shadow iff there's nothing there
-            if rectx/self.gridsize<len(self.grid) and recty/self.gridsize<len(self.grid[0]) and self.grid[rectx/self.gridsize][recty/self.gridsize] is None:
+            if rectx/self.gridsize<len(self.mygrid) and recty/self.gridsize<len(self.mygrid[0]) and self.mygrid[rectx/self.gridsize][recty/self.gridsize] is None:
                 #delete old rectangle
                 self.delete('shadow')
                 #make new rectangle
-                self.create_rectangle(rectx,recty,rectx+self.gridsize,recty+self.gridsize,fill="gray",tags='shadow')
+                self.create_rectangle(rectx,recty,rectx+self.gridsize,recty+self.gridsize,fill='gray',stipple='gray12',tags='shadow')
                 self.tag_raise(source.id,'shadow')
         
     def dnd_leave(self,source,event):
@@ -420,14 +442,14 @@ class CanvasDnd(Canvas):
             rectx=x-x%self.gridsize
             recty=y-y%self.gridsize
             #free up the grid for Dragged
-            if rectx/self.gridsize<len(self.grid) and recty/self.gridsize<len(self.grid[0]) and self.grid[rectx/self.gridsize][recty/self.gridsize]==source:
-                self.grid[rectx/self.gridsize][recty/self.gridsize]=None
+            if rectx/self.gridsize<len(self.mygrid) and recty/self.gridsize<len(self.mygrid[0]) and self.mygrid[rectx/self.gridsize][recty/self.gridsize]==source:
+                self.mygrid[rectx/self.gridsize][recty/self.gridsize]=None
             #redraw the shadow iff there's nothing there
-            if rectx/self.gridsize<len(self.grid) and recty/self.gridsize<len(self.grid[0]) and self.grid[rectx/self.gridsize][recty/self.gridsize] is None:
+            if rectx/self.gridsize<len(self.mygrid) and recty/self.gridsize<len(self.mygrid[0]) and self.mygrid[rectx/self.gridsize][recty/self.gridsize] is None:
                 #delete old rectangle
                 self.delete('shadow')
                 #make new rectangle
-                self.create_rectangle(rectx,recty,rectx+self.gridsize,recty+self.gridsize,fill="gray",tags="shadow")
+                self.create_rectangle(rectx,recty,rectx+self.gridsize,recty+self.gridsize,fill='gray',stipple='gray12',tags="shadow")
                 self.tag_raise(source.id,'shadow')
         
     def dnd_commit(self,source,event):
@@ -451,12 +473,12 @@ class CanvasDnd(Canvas):
                 else:
                     self.dnd_leave(source,event)
                     return
-            xy=(x,y)
+            xy=(x+5,y+5)
             source.set_pos(xy)
             #remove shadow
             self.delete('shadow')
             #mark its place in the grid
-            self.grid[int(x/self.gridsize)][int(y/self.gridsize)] = source
+            self.mygrid[int(x/self.gridsize)][int(y/self.gridsize)] = source
 
 
 
@@ -464,8 +486,18 @@ class Inventory(CanvasDnd):
     """
     A small Canvas that loads images and keeps them left-justified.
     """
-    def __init__(self,master,items,**kw):
+    def __init__(self,master,**kw):
+        #for the images i have, height should be 62
         self.objects = []
+        self.height = 0
+        self.left = 5
+        #remember the images we're handed, even if we don't have them anymore
+        self.items = None
+        CanvasDnd.__init__(self, master, **kw)
+
+            
+    def draw_inv(self,items):
+        self.items = items
         self.height = 0
         self.left = 5
         for image in items:
@@ -477,15 +509,23 @@ class Inventory(CanvasDnd):
             #make this widget's height default to the max height of its items
             if obj.winfo_height()>self.height:
                 self.height = obj.winfo_height()
-        if not kw.has_key('height') or self.height+5>kw['height']:
-            kw['height']=self.height+5
-        if not kw.has_key('width') or self.width>kw['width']:
-            kw['width']=self.left
-        CanvasDnd.__init__(self, master, **kw)
         bounds = 0,0,self.left,self.height+5
         for obj in self.objects:
             obj.appear(self,bounds=bounds)
             self.tag_bind(obj.id,'<ButtonPress>',obj.press)
+            
+    def wipe(self):
+        self.delete("all")
+        self.objects = []
+        self.items = None
+            
+    def reset(self):
+        if self.items is None:
+            return #no error because doing nothing is probably exactly what is wanted here
+        items = self.items
+        self.wipe()
+        self.draw_inv(items)
+            
             
     def delete(self,id):
         self.left=5
@@ -540,7 +580,9 @@ class TrashBin(CanvasDnd):
         source.vanish(all=1)
 
 if __name__ == "__main__":
-
+    
+    import random
+    
     def on_dnd_start(event):
         """
         This is invoked by initiation_object to start the drag and drop process
@@ -562,7 +604,7 @@ if __name__ == "__main__":
 
     
     Root = Tk()
-    Root.title('Drag-and-drop "real-world" demo')
+    Root.title('Drag and Drop Tester')
 
     #Create a button to act as the initiation_object and bind it to <ButtonPress> so
     #    we start drag and drop when the user clicks on it.
@@ -575,15 +617,20 @@ if __name__ == "__main__":
     #Create two canvases to act as the Target Widgets for the drag and drop. Note that
     #    these canvases will act as both the TargetWidget AND the TargetObject.
     items = []
+    lands = []
     try:
         for i in range(5):
-            items.append(Image.open("emoji/monsters/"+str(i+1)+".gif"))
+            im = Image.open("emoji/monsters/"+str(i+1)+".gif")
+            im.info['filename'] = str(i+1)
+            items.append(im)
+            if i>0:
+                lands.append(Image.open("emoji/land/"+str(i)+".gif"))
     except IOError:
         tkMessageBox.showerror(
             "Open file",
             "No emoji available! Ensure there are images in the folders emoji/land and emoji/monsters"
         )
-    target_widget_target_object = Inventory(Root,items,relief=RAISED,bd=2,background='white')
+    target_widget_target_object = Inventory(Root,relief=RAISED,bd=2,background='white',height=62)
     target_widget_target_object.pack(expand=YES,fill=BOTH)
     
     target_widget_target_object2 = CanvasDnd(Root,5,5,True,relief=RAISED,bd=2,background='white')
@@ -594,6 +641,8 @@ if __name__ == "__main__":
     trash = TrashBin(Root, relief=RAISED,bd=2)
     trash.pack(expand=NO)
     
-
     
+    Root.geometry('{}x{}'.format(200, 300))
+    Root.after(1000,target_widget_target_object.draw_inv,items)
+    Root.after(2000,target_widget_target_object2.draw_map,lands,random)
     Root.mainloop()
