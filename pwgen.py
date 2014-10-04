@@ -12,6 +12,11 @@ import tkSimpleDialog, tkMessageBox
 import pyperclip
 import os
 from mapcanvas import * 
+
+def resource_path(relative):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative)
+    return os.path.join(relative)
     
 class pw_gen(Tk):
     def __init__(self,parent,sites):
@@ -36,9 +41,9 @@ class pw_gen(Tk):
         monsterfiles = filter(lambda x: x.lower().endswith('gif') or x.lower().endswith('png'),os.listdir(os.path.join('emoji','monsters')))
         for i in range(6):
             filename = random.choice(landfiles)
-            lands.append(Image.open(os.path.join('emoji','land',filename)))
+            lands.append(Image.open(resource_path(os.path.join('emoji','land',filename))))
             filename = random.choice(monsterfiles)
-            im = Image.open(os.path.join('emoji','monsters',filename))
+            im = Image.open(resource_path(os.path.join('emoji','monsters',filename)))
             #the image needs to remember its filename for hashing purposes
             im.info['filename']=filename
             monsters.append(im)

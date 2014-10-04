@@ -36,6 +36,24 @@ Icon
 .Trashes
 
 describe.py
-emoji/land/1.gif
+emoji/
 *.gif
 *.pyc
+*.log
+*.toc
+*.pkg
+*.pyz
+*.pyd
+*.exe
+*.manifest
+*.dll
+*.csv
+*.enc
+*.tcl
+build/pwgen/warnpwgen.txt
+*.msg
+*.terms
+*.eps
+dist/
+build/
+*.spec
