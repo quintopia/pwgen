@@ -71,10 +71,11 @@ class pw_gen(Tk):
         self.map.draw_map(lands,random)
         self.savepw.config(state=NORMAL)
     
-    def reset_map(self):
+    def reset_map(self,password):
         self.map.reset()
         self.inventory.reset()
-        pyperclip.copy("")
+        if pyperclip.paste()==password:
+            pyperclip.copy("")
     
     def wipe_map(self):
         self.map.wipe()
@@ -145,7 +146,7 @@ class pw_gen(Tk):
         if self.timer2 is not None:
             self.after_cancel(self.timer2)
         self.timer1 = self.after(60000,self.password.delete,0, END)
-        self.timer2 = self.after(60000,self.reset_map)
+        self.timer2 = self.after(60000,self.reset_map,password)
         
     def initialize(self):
         label=Label(self,anchor="w",text="Website Name:")
