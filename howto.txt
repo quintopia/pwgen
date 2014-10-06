@@ -1,0 +1,43 @@
+HOWTO use this password generator:
+
+A) Installation:
+
+  1) You'll need the three scripts, pwgen.py, pyperclip.py, and mapcanvas.py in the same directory.
+  2) You'll need a Python (tested with 2.7) with a recent Tkinter and Pillow installed. It should work on windows, mac, or linux (let me know if there are problems).
+  3) You'll need a directory called emoji in the installation directory, which contains two directories "land" and "monsters".
+     - The land directory should contain small images (no larger than 100px by 100px) in gif or png format which depict static things like houses and quest items.
+     - The monsters directory contain very small images (no larger than 57px by 57px) in gif or png format which depict "characters": thing with agency, monsters, mages, knights, and wild animals
+     - Both types of images should have transparent backgrounds for best appearances. The more images there are in both of these directories (and the greater their variety), the easier it will be to remember generated passwords.
+     - If anyone knows of a good free, open-licensed source of images like these, I will gladly incorporate these into this project. Until then, I cannot distribute the images I use.
+  4) Run "python pwgen.py"
+  
+B) Adding new sites:
+
+  1) The first time you run this application, you'll get a dialog box asking you for a "site name". You can name your sites anything you want. For instance, "Google" or "Amazon".
+     - You'll also get this dialog any time you select "New Site" from the Site drop-down menu.
+  2) Enter a "Root Domain Name" for your site, such as "google.com" or "amazon.com". This field is optional. You can leave it blank if you are generating a password for something other than a website.
+  3) Choose a length for your password. I recommend choosing the maximum length password allowed by the site.
+  4) Enter a list of "special characters" allowed in passwords by the site in question. The default is "all" special characters, but you should remove from this field any characters disallowed by the site. The generated password will contain only alphanumeric characters and characters on this list.
+  5) Click "Save" to save this site configuration to a file so it will be remembered permanently. Remember to click "Save" any time you change any of the data listed in this section.
+  
+C) Generating passwords:
+
+  1) On the site in question, go to the page/form where you can change/create your password. Make sure that you have selected this site from the "Website Name" drop-down menu in the app.
+  2) Enter your "Global Password" in the corresponding field. This can be anything you want, but it is not secure to leave this field blank; recovering your generated passwords via shoulder-surfing is trivial without it. Think of it as your own personal seed for the random number generator.
+  3) Click "Draw Map". A map will appear below the form, and a number of "characters" will appear in the raised box above the map.
+  4) Drag and drop as many or as few characters as you want from this box onto the map.
+     - The more characters you add to the map, the harder it will be for someone who has access to your "Global Password" to reverse-engineer the generated password.
+     - Only the positions and types of the characters added to the map help determine the generated password.
+     - REMEMBER WHERE YOU PUT EACH CHARACTER. THIS ARRANGEMENT IS YOUR "PASSWORD" FOR THIS SITE.
+  5) Click "Copy Password to Clipboard". A password will be generated and added to your system clipboard. You will then have one minute to paste this password somewhere before the clipboard is overwritten.
+  6) Paste the generated password into the "New Password" field on the site.
+  
+  Once you have set your password up this way, you can log in any time by repeating steps 2-5 exactly as you performed them when generating the password the first time, then pasting the generated password into the password field on the login page.
+  
+D) Other considerations:
+
+  -If you accidentally copy something else before pasting your password, simply click the "Copy Password to Clipboard" button again within a minute to recopy it.
+  -One minute after clicking the "Copy Password to Clipboard" button, the "Global Password" box will be blanked and the characters cleared from the map. If you wish to generate the password again at this time, you must repeat steps 2,4, and 5 of the previous section.
+  -Bruce Schneier recommends never changing your password unless you think it has already been compromised. However, in order to change your password on a given site, you may follow the process described in section C, but in step 4, change the position of at least one character. I recommend drastically changing its position, as it is easier to remember large changes than small ones. However, even a small change will result in a drastically different password.
+  
+  

@@ -36,14 +36,34 @@ class pw_gen(Tk):
         random.seed(int(m.hexdigest(),16))
         lands = []
         monsters = []
-        #TODO: add error checking to this I/O
-        landfiles = filter(lambda x: x.lower().endswith('gif') or x.lower().endswith('png'),os.listdir(os.path.join('emoji','land')))
-        monsterfiles = filter(lambda x: x.lower().endswith('gif') or x.lower().endswith('png'),os.listdir(os.path.join('emoji','monsters')))
+        try:
+            landfiles = filter(lambda x: x.lower().endswith('gif') or x.lower().endswith('png'),os.listdir(os.path.join('emoji','land')))
+            monsterfiles = filter(lambda x: x.lower().endswith('gif') or x.lower().endswith('png'),os.listdir(os.path.join('emoji','monsters')))
+        except OSError:
+            tkMessageBox.showerror(
+                "No Emoji!",
+                "No emoji available! Ensure there are images in the folders emoji/land and emoji/monsters."
+            )
+            return
         for i in range(6):
             filename = random.choice(landfiles)
-            lands.append(Image.open(resource_path(os.path.join('emoji','land',filename))))
+            try:
+                lands.append(Image.open(resource_path(os.path.join('emoji','land',filename))))
+            except IOError:
+                tkMessageBox.showerror(
+                    "File Won't Open!",
+                    "Critical failure while opening "+resource_path(os.path.join('emoji','land',filename))+". Please make sure this file is an image of the appropriate type or delete it."
+                )
+                return
             filename = random.choice(monsterfiles)
-            im = Image.open(resource_path(os.path.join('emoji','monsters',filename)))
+            try:
+                im = Image.open(resource_path(os.path.join('emoji','monsters',filename)))
+            except IOError:
+                tkMessageBox.showerror(
+                    "File Won't Open!",
+                    "Critical failure while opening "+resource_path(os.path.join('emoji','monsters',filename))+". Please make sure this file is an image of the appropriate type or delete it."
+                )
+                return
             #the image needs to remember its filename for hashing purposes
             im.info['filename']=filename
             monsters.append(im)
@@ -54,6 +74,7 @@ class pw_gen(Tk):
     def reset_map(self):
         self.map.reset()
         self.inventory.reset()
+        pyperclip.copy("")
     
     def wipe_map(self):
         self.map.wipe()
@@ -222,14 +243,3 @@ if __name__ == "__main__":
     app = pw_gen(None,sites)
     app.title('Deterministic Password Generator')
     app.mainloop()
-    
-'''
-try:
-            self.image = Image.open("emoji/monsters/1.gif")
-        except IOError:
-            tkMessageBox.showerror(
-                "Open file",
-                "No emoji available! Ensure there are images in the folders emoji/land and emoji/monsters"
-            )
-            return
-'''
