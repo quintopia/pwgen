@@ -1,9 +1,9 @@
 HOWTO use this password generator:
 
-A) Installation:
+A) Installation and Running:
 
-  1) You'll need the three scripts, pwgen.py, pyperclip.py, and mapcanvas.py in the same directory.
-  2) You'll need a Python (tested with 2.7) with a recent Tkinter and Pillow installed. It should work on windows, mac, or linux (let me know if there are problems).
+  1) You'll need the two scripts, pwgen.py and mapcanvas.py in the same directory.
+  2) You'll need a Python (tested with 2.7) with a recent Tkinter and Pillow installed. Also, make sure xerox is installed. (https://pypi.python.org/pypi/xerox/) It should work on windows, mac, or linux (let me know if there are problems).
   3) You'll need a directory called emoji in the installation directory, which contains two directories "land" and "monsters".
      - The land directory should contain small images (no larger than 100px by 100px) in gif or png format which depict static things like houses and quest items.
      - The monsters directory contain very small images (no larger than 57px by 57px) in gif or png format which depict "characters": thing with agency, monsters, mages, knights, and wild animals
@@ -39,5 +39,5 @@ D) Other considerations:
   -If you accidentally copy something else before pasting your password, simply click the "Copy Password to Clipboard" button again within a minute to recopy it.
   -One minute after clicking the "Copy Password to Clipboard" button, the "Global Password" box will be blanked and the characters cleared from the map. If you wish to generate the password again at this time, you must repeat steps 2,4, and 5 of the previous section.
   -Bruce Schneier recommends never changing your password unless you think it has already been compromised. However, in order to change your password on a given site, you may follow the process described in section C, but in step 4, change the position of at least one character. I recommend drastically changing its position, as it is easier to remember large changes than small ones. However, even a small change will result in a drastically different password.
-  
+  -This app is not suitable for key generation. No warranty is made as to its suitability for secure password generation either. As always, a password is only as secure as the application it is used with.
   

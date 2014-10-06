@@ -9,7 +9,7 @@ from PIL import Image, ImageTk
 from hashlib import md5
 import random, csv
 import tkSimpleDialog, tkMessageBox
-import pyperclip
+import xerox as pyperclip
 import os
 from mapcanvas import * 
 
@@ -23,8 +23,7 @@ class pw_gen(Tk):
         Tk.__init__(self,parent)
         self.parent = parent
         self.sites = sites
-        self.timer1 = None
-        self.timer2 = None
+        self.timer = None
         self.initialize()
         
     def draw_map(self):
@@ -71,17 +70,24 @@ class pw_gen(Tk):
         self.map.draw_map(lands,random)
         self.savepw.config(state=NORMAL)
     
-    def reset_map(self,password):
+    def reset_map(self,password,oldpaste):
         self.map.reset()
         self.inventory.reset()
+        #just in case?
+        self.password.delete(0,END)
         if pyperclip.paste()==password:
-            pyperclip.copy("")
+            pyperclip.copy(oldpaste)
     
     def wipe_map(self):
         self.map.wipe()
         self.inventory.wipe()
-        self.timer1 = None
-        self.timer2 = None
+        if self.timer is not None:
+            self.after_cancel(self.timer)
+        #just in case?
+        self.password.delete(0,END)
+        self.timer = None
+        if pyperclip.paste()==password:
+            pyperclip.copy(oldpaste)
         
     def update_fields(self,*args):
         if self.name.get() == self.prevname:
@@ -140,13 +146,11 @@ class pw_gen(Tk):
         random.seed(int(m.hexdigest(),16))
         for i in range(int(self.pw_length.get())):
             password=password+random.choice(selector)
-        pyperclip.copy(password)
-        if self.timer1 is not None:
-            self.after_cancel(self.timer1)
-        if self.timer2 is not None:
-            self.after_cancel(self.timer2)
-        self.timer1 = self.after(60000,self.password.delete,0, END)
-        self.timer2 = self.after(60000,self.reset_map,password)
+        oldpaste = pyperclip.paste()
+        pyperclip.copy(password);print password==pyperclip.paste()
+        if self.timer is not None:
+            self.after_cancel(self.timer)
+        self.timer = self.after(60000,self.reset_map,password,oldpaste)
         
     def initialize(self):
         label=Label(self,anchor="w",text="Website Name:")
