@@ -247,4 +247,5 @@ if __name__ == "__main__":
         pass #we already have an empty dictionary, which should be what we want in this case
     app = pw_gen(None,sites)
     app.title('Deterministic Password Generator')
+    app.resizable(0,0)
     app.mainloop()
