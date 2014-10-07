@@ -24,6 +24,8 @@ class pw_gen(Tk):
         self.parent = parent
         self.sites = sites
         self.timer = None
+        self.pw = ""
+        self.oldpaste = ""
         self.initialize()
         
     def draw_map(self):
@@ -70,13 +72,15 @@ class pw_gen(Tk):
         self.map.draw_map(lands,random)
         self.savepw.config(state=NORMAL)
     
-    def reset_map(self,password,oldpaste):
+    def reset_map(self):
         self.map.reset()
         self.inventory.reset()
         #just in case?
         self.password.delete(0,END)
-        if pyperclip.paste()==password:
-            pyperclip.copy(oldpaste)
+        if pyperclip.paste()==self.pw:
+            pyperclip.copy(self.oldpaste)
+        self.pw = ""
+        self.oldpaste = ""
     
     def wipe_map(self):
         self.map.wipe()
@@ -86,8 +90,10 @@ class pw_gen(Tk):
         #just in case?
         self.password.delete(0,END)
         self.timer = None
-        if pyperclip.paste()==password:
-            pyperclip.copy(oldpaste)
+        if pyperclip.paste()==self.pw:
+            pyperclip.copy(self.oldpaste)
+        self.pw = ""
+        self.oldpaste = ""
         
     def update_fields(self,*args):
         if self.name.get() == self.prevname:
@@ -132,7 +138,6 @@ class pw_gen(Tk):
         
     def gen_pw(self):
         selector = "1234567890qwertyuuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"+self.chars.get()
-        password=""
         m = md5()
         m.update(self.name.get())
         m.update(self.domain.get())
@@ -145,12 +150,12 @@ class pw_gen(Tk):
             self.savepw.config(state=DISABLED)
         random.seed(int(m.hexdigest(),16))
         for i in range(int(self.pw_length.get())):
-            password=password+random.choice(selector)
-        oldpaste = pyperclip.paste()
-        pyperclip.copy(password);print password==pyperclip.paste()
+            self.pw+=random.choice(selector)
+        self.oldpaste = pyperclip.paste()
+        pyperclip.copy(self.pw)
         if self.timer is not None:
             self.after_cancel(self.timer)
-        self.timer = self.after(60000,self.reset_map,password,oldpaste)
+        self.timer = self.after(60000,self.reset_map)
         
     def initialize(self):
         label=Label(self,anchor="w",text="Website Name:")
