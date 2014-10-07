@@ -57,3 +57,6 @@ build/pwgen/warnpwgen.txt
 dist/
 build/
 *.spec
+editable.py
+optmenudemo.py
+statusbardemo.py
