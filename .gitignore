@@ -60,3 +60,4 @@ build/
 editable.py
 optmenudemo.py
 statusbardemo.py
+tooltip.py
