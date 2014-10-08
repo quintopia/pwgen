@@ -12,11 +12,6 @@ import tkSimpleDialog, tkMessageBox
 import xerox as pyperclip
 import os
 from mapcanvas import * 
-
-def resource_path(relative):
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, relative)
-    return os.path.join(relative)
     
 class pw_gen(Tk):
     def __init__(self,parent,sites):
@@ -49,20 +44,20 @@ class pw_gen(Tk):
         for i in range(6):
             filename = random.choice(landfiles)
             try:
-                lands.append(Image.open(resource_path(os.path.join('emoji','land',filename))))
+                lands.append(Image.open(os.path.join('emoji','land',filename)))
             except IOError:
                 tkMessageBox.showerror(
                     "File Won't Open!",
-                    "Critical failure while opening "+resource_path(os.path.join('emoji','land',filename))+". Please make sure this file is an image of the appropriate type or delete it."
+                    "Critical failure while opening "+os.path.join('emoji','land',filename)+". Please make sure this file is an image of the appropriate type or delete it."
                 )
                 return
             filename = random.choice(monsterfiles)
             try:
-                im = Image.open(resource_path(os.path.join('emoji','monsters',filename)))
+                im = Image.open(os.path.join('emoji','monsters',filename))
             except IOError:
                 tkMessageBox.showerror(
                     "File Won't Open!",
-                    "Critical failure while opening "+resource_path(os.path.join('emoji','monsters',filename))+". Please make sure this file is an image of the appropriate type or delete it."
+                    "Critical failure while opening "+os.path.join('emoji','monsters',filename)+". Please make sure this file is an image of the appropriate type or delete it."
                 )
                 return
             #the image needs to remember its filename for hashing purposes
@@ -77,8 +72,11 @@ class pw_gen(Tk):
         self.inventory.reset()
         #just in case?
         self.password.delete(0,END)
-        if pyperclip.paste()==self.pw:
-            pyperclip.copy(self.oldpaste)
+        try:
+            if pyperclip.paste()==self.pw:
+                pyperclip.copy(self.oldpaste)
+        except TypeError:
+            pass
         self.pw = ""
         self.oldpaste = ""
     
@@ -90,8 +88,11 @@ class pw_gen(Tk):
         #just in case?
         self.password.delete(0,END)
         self.timer = None
-        if pyperclip.paste()==self.pw:
-            pyperclip.copy(self.oldpaste)
+        try:
+            if pyperclip.paste()==self.pw:
+                pyperclip.copy(self.oldpaste)
+        except TypeError:
+            pass
         self.pw = ""
         self.oldpaste = ""
         
@@ -190,7 +191,10 @@ class pw_gen(Tk):
         random.seed(int(m.hexdigest(),16))
         for i in range(int(self.pw_length.get())):
             self.pw+=random.choice(selector)
-        self.oldpaste = pyperclip.paste()
+        try:
+            self.oldpaste = pyperclip.paste()
+        except TypeError:
+            self.oldpaste = ''
         pyperclip.copy(self.pw)
         if self.timer is not None:
             self.after_cancel(self.timer)
