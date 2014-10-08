@@ -125,6 +125,45 @@ class pw_gen(Tk):
         self.savepw.config(state=DISABLED)
         self.wipe_map()
         
+    def edit(self):
+        #just needs to 1) change the entry name in the optionmenu
+        #              2) change the sitename in the sites table entry
+        newname = tkSimpleDialog.askstring("Rename the current site?","Please enter a new name for the current site.")
+        if newname is None or newname == self.name.get():
+            return
+        #change the site table
+        del sites[self.name.get()]
+        sites[newname]=Website(name=newname,domain=self.domain.get(),username=self.username.get(),length=self.pw_length.get(),chars=self.chars.get())
+        #change the option menu
+        index = self.optionList['menu'].index(self.name.get())
+        self.optionList['menu'].entryconfig(index,label=newname,command=lambda name=newname: self.name.set(name))
+        #set prevname to the current name before changing it to prevent update_fields from wiping the other form fields
+        self.prevname = newname
+        self.name.set(newname)
+        
+        
+        
+    def delete(self):
+        #needs to 1) delete the entry from the optionmenu
+        #         2) delete the entry from the sites table
+        #         3) switch to the next option (or the first if there is no next option)
+        #         4) save config
+        confirm = tkMessageBox.askyesno("Delete this site?", "Are you sure you want to delete the current site? This action CANNOT be undone.",default="no")
+        if confirm=="no":
+            return
+        #delete from sites
+        del sites[self.name.get()]
+        #delete from optionmenu
+        index = self.optionList['menu'].index(self.name.get())
+        self.optionList['menu'].delete(index)
+        newname = self.optionList['menu'].entrycget(index,"label")
+        if newname != "New Site...":
+            self.name.set(newname)
+        else:
+            newname = self.optionList['menu'].entrycget(0,"label")
+            self.name.set(newname)
+        self.save()
+
     def save(self):
         with open("sites.csv", "wb") as sitefile:
             writer = csv.writer(sitefile)
@@ -165,10 +204,16 @@ class pw_gen(Tk):
         self.name = StringVar(self)
         self.name.trace("w", lambda *args: self.after_idle(self.update_fields, *args))
         self.prevname = ""
-        sitelist = self.sites.keys()
+        sitelist = sorted(self.sites.keys(),key=lambda k : k.lower())
         sitelist.append("New Site...")
-        self.optionList = OptionMenu(self, self.name, *(sitelist))
-        self.optionList.grid(column=1,row=c,sticky='EW',padx=20, pady=10)
+        self.box = Frame(self)
+        self.delButton = Button(self.box, text="Delete", command=self.delete)
+        self.delButton.pack(side=RIGHT)
+        self.editButton = Button(self.box, text="Edit", command=self.edit)
+        self.editButton.pack(side=RIGHT)
+        self.optionList = OptionMenu(self.box, self.name, *(sitelist))
+        self.optionList.pack(fill=X)
+        self.box.grid(column=1,row=c,sticky='EW',padx=20, pady=10)
         c=c+1
         
         #Textbox for the domain name
