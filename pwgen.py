@@ -102,7 +102,15 @@ class pw_gen(Tk):
         if self.name.get() == "New Site...":
             sitename = tkSimpleDialog.askstring("Create New Site", "Enter name of site:" ,parent=self)
             if sitename is None:
-                self.name.set(self.prevname)
+                if len(sites)>0:
+                    self.name.set(self.prevname)
+                else:
+                    quit = tkMessageBox.askretrycancel("Try Again?","You must create at least one site to use this app. Select retry to create a new site, or cancel to exit the application.")
+                    print quit
+                    if quit:
+                        return self.update_fields(args)
+                    else:
+                        return self.quit()
             else:
                 self.optionList['menu'].insert_command(len(sites),label=sitename,command=lambda name=sitename: self.name.set(name))
                 sites[sitename]=Website(name=sitename,domain='',username='',length='10',chars='-_.`~#%^&(){}\'!@*=+[]{}\\|;:",<>/?')
@@ -129,9 +137,12 @@ class pw_gen(Tk):
     def edit(self):
         #just needs to 1) change the entry name in the optionmenu
         #              2) change the sitename in the sites table entry
-        newname = tkSimpleDialog.askstring("Rename the current site?","Please enter a new name for the current site.")
+        newname = tkSimpleDialog.askstring("Rename the current site?","Please enter a new name for the current site.",initialvalue=self.name.get())
         if newname is None or newname == self.name.get():
             return
+        if newname in sites.keys():
+            tkMessageBox.showerror("Duplicate Site Name","There is already a site with that name. Please choose a different name.")
+            return self.edit()
         #change the site table
         del sites[self.name.get()]
         sites[newname]=Website(name=newname,domain=self.domain.get(),username=self.username.get(),length=self.pw_length.get(),chars=self.chars.get())
@@ -142,7 +153,13 @@ class pw_gen(Tk):
         self.prevname = newname
         self.name.set(newname)
         
-        
+    def quit(self):
+        try:
+            if pyperclip.paste()==self.pw:
+                pyperclip.copy(self.oldpaste)
+        except TypeError:
+            pass
+        self.destroy()
         
     def delete(self):
         #needs to 1) delete the entry from the optionmenu
@@ -150,7 +167,7 @@ class pw_gen(Tk):
         #         3) switch to the next option (or the first if there is no next option)
         #         4) save config
         confirm = tkMessageBox.askyesno("Delete this site?", "Are you sure you want to delete the current site? This action CANNOT be undone.",default="no")
-        if confirm=="no":
+        if not confirm:
             return
         #delete from sites
         del sites[self.name.get()]
@@ -273,7 +290,7 @@ class pw_gen(Tk):
         #Buttons for saving the current sites and quitting
         self.savebutton = Button(self, text="Save", command=self.save)
         self.savebutton.grid(column=0,row=c)
-        self.exitbutton = Button(self, text="Quit", command=self.destroy)
+        self.exitbutton = Button(self, text="Quit", command=self.quit)
         self.exitbutton.grid(column=1,row=c)
         c=c+1
         
