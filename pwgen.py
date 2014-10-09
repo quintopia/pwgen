@@ -24,13 +24,13 @@ class pw_gen(Tk):
         self.initialize()
         
     def draw_map(self):
-        gpw = self.password.get()
-        self.wipe_map()
+        self.map.wipe()
+        self.inventory.wipe()
         m = md5()
         m.update(self.name.get())
         m.update(self.domain.get())
         m.update(self.username.get())
-        m.update(gpw)
+        m.update(self.password.get())
         random.seed(int(m.hexdigest(),16))
         lands = []
         monsters = []
@@ -120,6 +120,9 @@ class pw_gen(Tk):
                     else:
                         return self.quit()
             else:
+                if sitename in sites.keys():
+                    tkMessageBox.showerror("Duplicate Site Name","There is already a site with that name. Please choose a different name.")
+                    return self.update_fields(args)
                 self.optionList['menu'].insert_command(len(sites),label=sitename,command=lambda name=sitename: self.name.set(name))
                 sites[sitename]=Website(name=sitename,domain='',username='',length='10',chars='-_.`~#%^&(){}\'!@*=+[]{}\\|;:",<>/?')
                 self.prevname = sitename
