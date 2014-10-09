@@ -317,14 +317,17 @@ class CanvasDnd(Canvas):
         #first we draw in the background colors
         self.imagetk.append(ImageTk.PhotoImage(background_map(grid,self.gridsize)))
         self.create_image((0,0),image=self.imagetk[0],anchor=NW)
+        #we have to manual set the width and height here on account of automatic resizing on linux which i can't replicate
+        width = self.gridx*self.gridsize
+        height = self.gridy*self.gridsize
         #six land images in four corners and then SE of the NW one and SW of the NE one
         #first, put the images in the four corners of the canvas
         imageloc = [[0,0],
-                    [self.winfo_width() - images[1].size[0],0],
-                    [0,self.winfo_height() - images[2].size[1]],
-                    [self.winfo_width() - images[3].size[0],self.winfo_height() - images[3].size[1]],
+                    [width - images[1].size[0],0],
+                    [0,height - images[2].size[1]],
+                    [width - images[3].size[0],height - images[3].size[1]],
                     [images[0].size[0],images[0].size[1]],
-                    [self.winfo_width() - images[1].size[0]-images[5].size[0],images[1].size[1]]]
+                    [width - images[1].size[0]-images[5].size[0],images[1].size[1]]]
         
         
         #now, repeatedly
@@ -334,9 +337,9 @@ class CanvasDnd(Canvas):
                 #find how far it could move in each direction
                 #start it out with the distance to the left edge of the canvas, etc.
                 margin = [imageloc[j][0],
-                          self.winfo_width()-(imageloc[j][0]+images[j].size[0]),
+                          width-(imageloc[j][0]+images[j].size[0]),
                           imageloc[j][1],
-                          self.winfo_height()-(imageloc[j][1]+images[j].size[1])]
+                          height-(imageloc[j][1]+images[j].size[1])]
                 
                 #for each other image
                 for k in [x for x in xrange(len(images)) if x!=j]:
@@ -358,7 +361,10 @@ class CanvasDnd(Canvas):
                             margin[3] = imageloc[k][1]-(imageloc[j][1]+images[j].size[1])
                             
                 #now, pick a direction for which the margin is positive
-                direction = random.choice([x for x in xrange(4) if margin[x]>0])
+                directions = [x for x in xrange(4) if margin[x]>0]
+                if len(directions)==0:
+                    continue
+                direction = random.choice(directions)
                 
                 #pick a random distance in that direction (within the margin)
                 distance = random.randint(0,margin[direction])

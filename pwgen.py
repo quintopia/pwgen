@@ -24,11 +24,13 @@ class pw_gen(Tk):
         self.initialize()
         
     def draw_map(self):
+        gpw = self.password.get()
+        self.wipe_map()
         m = md5()
         m.update(self.name.get())
         m.update(self.domain.get())
         m.update(self.username.get())
-        m.update(self.password.get())
+        m.update(gpw)
         random.seed(int(m.hexdigest(),16))
         lands = []
         monsters = []
@@ -66,6 +68,7 @@ class pw_gen(Tk):
         self.inventory.draw_inv(monsters)
         self.map.draw_map(lands,random)
         self.savepw.config(state=NORMAL)
+        self.getmap.config(text="Reset Map")
     
     def reset_map(self):
         self.map.reset()
@@ -77,6 +80,8 @@ class pw_gen(Tk):
                 pyperclip.copy(self.oldpaste)
         except TypeError:
             pass
+        except XclipNotFound:
+            pass #presumably some other tool will take care of the clipboard
         self.pw = ""
         self.oldpaste = ""
     
@@ -93,8 +98,11 @@ class pw_gen(Tk):
                 pyperclip.copy(self.oldpaste)
         except TypeError:
             pass
+        except XclipNotFound:
+            pass #presumably some other tool will take care of the clipboard
         self.pw = ""
         self.oldpaste = ""
+        self.getmap.config(text="Draw Map")
         
     def update_fields(self,*args):
         if self.name.get() == self.prevname:
@@ -159,6 +167,8 @@ class pw_gen(Tk):
                 pyperclip.copy(self.oldpaste)
         except TypeError:
             pass
+        except XclipNotFound:
+            pass #presumably some other tool will take care of the clipboard
         self.destroy()
         
     def delete(self):
@@ -195,6 +205,7 @@ class pw_gen(Tk):
         
     def gen_pw(self):
         selector = "1234567890qwertyuuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"+self.chars.get()
+        self.pw=""
         m = md5()
         m.update(self.name.get())
         m.update(self.domain.get())
@@ -212,6 +223,8 @@ class pw_gen(Tk):
             self.oldpaste = pyperclip.paste()
         except TypeError:
             self.oldpaste = ''
+        except XclipNotFound:
+            pass
         pyperclip.copy(self.pw)
         if self.timer is not None:
             self.after_cancel(self.timer)
