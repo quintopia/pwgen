@@ -41,3 +41,6 @@ D) Other considerations:
   -Bruce Schneier recommends never changing your password unless you think it has already been compromised. However, in order to change your password on a given site, you may follow the process described in section C, but in step 4, change the position of at least one character. I recommend drastically changing its position, as it is easier to remember large changes than small ones. However, even a small change will result in a drastically different password.
   -This app is not suitable for key generation. No warranty is made as to its suitability for secure password generation either. As always, a password is only as secure as the application it is used with.
   
+E) Credits:
+  -Sujin Headrick for testing
+  -Cam Farnell for the wonderful example code on which the map canvas is based.
