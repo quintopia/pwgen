@@ -85,13 +85,14 @@ class pw_gen(Tk):
         self.pw = ""
         self.oldpaste = ""
     
-    def wipe_map(self):
+    def wipe_map(self,wipepw=True):
         self.map.wipe()
         self.inventory.wipe()
         if self.timer is not None:
             self.after_cancel(self.timer)
         #just in case?
-        self.password.delete(0,END)
+        if wipepw:
+            self.password.delete(0,END)
         self.timer = None
         try:
             if pyperclip.paste()==self.pw:
@@ -123,6 +124,7 @@ class pw_gen(Tk):
                 if sitename in sites.keys():
                     tkMessageBox.showerror("Duplicate Site Name","There is already a site with that name. Please choose a different name.")
                     return self.update_fields(args)
+                self.save()
                 self.optionList['menu'].insert_command(len(sites),label=sitename,command=lambda name=sitename: self.name.set(name))
                 sites[sitename]=Website(name=sitename,domain='',username='',length='10',chars='-_.`~#%^&(){}\'!@*=+[]{}\\|;:",<>/?')
                 self.prevname = sitename
@@ -135,6 +137,7 @@ class pw_gen(Tk):
                 self.savepw.config(state=DISABLED)
                 self.wipe_map()
             return
+        self.save()
         site = self.sites[self.name.get()]
         self.domain.set(site.domain)
         self.username.set(site.username)
@@ -165,6 +168,7 @@ class pw_gen(Tk):
         self.name.set(newname)
         
     def quit(self):
+        self.save()
         try:
             if pyperclip.paste()==self.pw:
                 pyperclip.copy(self.oldpaste)
@@ -204,7 +208,7 @@ class pw_gen(Tk):
         site = self.sites[self.name.get()]
         self.sites[self.name.get()] = site._replace(domain = self.domain.get(),username=self.username.get(),length=self.pw_length.get(),chars=self.chars.get())
         self.savepw.config(state=DISABLED)
-        self.wipe_map()
+        self.wipe_map(False)
         
     def gen_pw(self):
         selector = "1234567890qwertyuuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"+self.chars.get()
@@ -234,10 +238,11 @@ class pw_gen(Tk):
         self.timer = self.after(60000,self.reset_map)
         
     def initialize(self):
+        self.resizable(0,0)
         label=Label(self,anchor="w",text="Website Name:")
         c=0
         #Option to select website
-        label.grid(column=0,row=c,sticky='EW',padx=20, pady=10)
+        label.grid(column=0,row=c,sticky='EW',padx=20, pady=5)
         self.name = StringVar(self)
         self.name.trace("w", lambda *args: self.after_idle(self.update_fields, *args))
         self.prevname = ""
@@ -250,50 +255,50 @@ class pw_gen(Tk):
         self.editButton.pack(side=RIGHT)
         self.optionList = OptionMenu(self.box, self.name, *(sitelist))
         self.optionList.pack(fill=X)
-        self.box.grid(column=1,row=c,sticky='EW',padx=20, pady=10)
+        self.box.grid(column=1,row=c,sticky='EW',padx=20, pady=5)
         c=c+1
         
         #Textbox for the domain name
         label=Label(self,anchor="w",text="Root Domain Name:")
-        label.grid(column=0, row=c,sticky='EW',padx=20, pady=10)
+        label.grid(column=0, row=c,sticky='EW',padx=20, pady=5)
         self.domain = StringVar(self)
         self.domain.trace("w", self.update_record)
         self.domainentry = Entry(self, textvariable=self.domain)
-        self.domainentry.grid(column=1,row=c,sticky='EW',padx=20, pady=10)
+        self.domainentry.grid(column=1,row=c,sticky='EW',padx=20, pady=5)
         c=c+1
         
         #Textbox for username
         label=Label(self,anchor="w",text="User Name:")
-        label.grid(column=0, row=c,sticky='EW',padx=20, pady=10)
+        label.grid(column=0, row=c,sticky='EW',padx=20, pady=5)
         self.username = StringVar(self)
         self.username.trace("w", self.update_record)
         self.usernameentry = Entry(self,textvariable=self.username)
-        self.usernameentry.grid(column=1,row=c,sticky='EW',padx=20, pady=10)
+        self.usernameentry.grid(column=1,row=c,sticky='EW',padx=20, pady=5)
         c=c+1
         
         #Textbox for password
         label=Label(self,anchor="w",text="Global Password:")
-        label.grid(column=0, row=c,sticky='EW',padx=20, pady=10)
+        label.grid(column=0, row=c,sticky='EW',padx=20, pady=5)
         self.password = Entry(self,show='*')
-        self.password.grid(column=1, row=c,sticky='EW',padx=20, pady=10)
+        self.password.grid(column=1, row=c,sticky='EW',padx=20, pady=5)
         c=c+1
         
         #Option for selecting password length
         label=Label(self,anchor="w",text="Password Length:")
-        label.grid(column=0, row=c,sticky='EW',padx=20, pady=10)
+        label.grid(column=0, row=c,sticky='EW',padx=20, pady=5)
         self.pw_length = StringVar(self)
         self.pw_length.trace("w", self.update_record)
         self.lengthList = OptionMenu(self, self.pw_length, *['8','9','10','11','12','13','14','15','16'])
-        self.lengthList.grid(column=1, row=c, sticky='EW', padx=20, pady=10)
+        self.lengthList.grid(column=1, row=c, sticky='EW', padx=20, pady=5)
         c=c+1
         
         #Textbox for allowable special characters
         self.chars = StringVar(self)
         self.chars.trace("w",self.update_record)
         label=Label(self,anchor="w",text="Allowed Special Characters:")
-        label.grid(column=0, row=c,sticky='EW',padx=20,pady=10)
+        label.grid(column=0, row=c,sticky='EW',padx=20,pady=5)
         self.charsentry = Entry(self, textvariable=self.chars,width=32)
-        self.charsentry.grid(column=1,row=c,sticky='EW',padx=20,pady=10)
+        self.charsentry.grid(column=1,row=c,sticky='EW',padx=20,pady=5)
         c=c+1
         
         #Buttons for drawing the map and copying the result to the clipboard
@@ -301,13 +306,6 @@ class pw_gen(Tk):
         self.getmap.grid(column=0,row=c)
         self.savepw = Button(self, text="Copy Password to Clipboard", command=self.gen_pw, state=DISABLED)
         self.savepw.grid(column=1,row=c)
-        c=c+1
-        
-        #Buttons for saving the current sites and quitting
-        self.savebutton = Button(self, text="Save", command=self.save)
-        self.savebutton.grid(column=0,row=c)
-        self.exitbutton = Button(self, text="Quit", command=self.quit)
-        self.exitbutton.grid(column=1,row=c)
         c=c+1
         
         #Canvas to draw the inventory
@@ -324,6 +322,8 @@ class pw_gen(Tk):
         self.map.grid(column=0, row=c, columnspan=2, sticky='EW')
         self.name.set(sitelist[0]) #pick the option LAST so that the call to update_fields works
         
+        self.protocol("WM_DELETE_WINDOW",self.quit)
+        
         
 if __name__ == "__main__":
     sites = {}
@@ -334,5 +334,4 @@ if __name__ == "__main__":
         pass #we already have an empty dictionary, which should be what we want in this case
     app = pw_gen(None,sites)
     app.title('Deterministic Password Generator')
-    app.resizable(0,0)
     app.mainloop()
