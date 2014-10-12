@@ -71,10 +71,11 @@ class pw_gen(Tk):
         self.getmap.config(text="Reset Map")
     
     def reset_map(self):
-        self.map.reset()
-        self.inventory.reset()
-        #just in case?
-        self.password.delete(0,END)
+        if not self.trust.get():
+            self.map.reset()
+            self.inventory.reset()
+            #just in case?
+            self.password.delete(0,END)
         try:
             if pyperclip.paste()==self.pw:
                 pyperclip.copy(self.oldpaste)
@@ -91,7 +92,7 @@ class pw_gen(Tk):
         if self.timer is not None:
             self.after_cancel(self.timer)
         #just in case?
-        if wipepw:
+        if wipepw and not self.trust.get():
             self.password.delete(0,END)
         self.timer = None
         try:
@@ -144,7 +145,6 @@ class pw_gen(Tk):
         self.pw_length.set(site.length)
         self.chars.set(site.chars)
         self.prevname = self.name.get()
-        self.password.delete(0, END)
         self.savepw.config(state=DISABLED)
         self.wipe_map()
         
@@ -242,7 +242,7 @@ class pw_gen(Tk):
         label=Label(self,anchor="w",text="Website Name:")
         c=0
         #Option to select website
-        label.grid(column=0,row=c,sticky='EW',padx=10, pady=5)
+        label.grid(column=0,row=c,sticky='EW',pady=5)
         self.name = StringVar(self)
         self.name.trace("w", lambda *args: self.after_idle(self.update_fields, *args))
         self.prevname = ""
@@ -255,50 +255,56 @@ class pw_gen(Tk):
         self.editButton.pack(side=RIGHT)
         self.optionList = OptionMenu(self.box, self.name, *(sitelist))
         self.optionList.pack(fill=X)
-        self.box.grid(column=1,row=c,sticky='EW',padx=10, pady=5)
+        self.box.grid(column=1,row=c,sticky='EW',pady=5)
         c=c+1
         
         #Textbox for the domain name
         label=Label(self,anchor="w",text="Root Domain Name:")
-        label.grid(column=0, row=c,sticky='EW',padx=10, pady=5)
+        label.grid(column=0, row=c,sticky='EW', pady=5)
         self.domain = StringVar(self)
         self.domain.trace("w", self.update_record)
         self.domainentry = Entry(self, textvariable=self.domain)
-        self.domainentry.grid(column=1,row=c,sticky='EW',padx=10, pady=5)
+        self.domainentry.grid(column=1,row=c,sticky='EW', pady=5)
         c=c+1
         
         #Textbox for username
         label=Label(self,anchor="w",text="User Name:")
-        label.grid(column=0, row=c,sticky='EW',padx=10, pady=5)
+        label.grid(column=0, row=c,sticky='EW', pady=5)
         self.username = StringVar(self)
         self.username.trace("w", self.update_record)
         self.usernameentry = Entry(self,textvariable=self.username)
-        self.usernameentry.grid(column=1,row=c,sticky='EW',padx=10, pady=5)
+        self.usernameentry.grid(column=1,row=c,sticky='EW', pady=5)
         c=c+1
         
         #Textbox for password
         label=Label(self,anchor="w",text="Global Password:")
-        label.grid(column=0, row=c,sticky='EW',padx=10, pady=5)
+        label.grid(column=0, row=c,sticky='EW', pady=5)
         self.password = Entry(self,show='*')
-        self.password.grid(column=1, row=c,sticky='EW',padx=10, pady=5)
+        self.password.grid(column=1, row=c,sticky='EW', pady=5)
+        c=c+1
+        
+        #Checkbutton for secure system
+        self.trust = IntVar(self)
+        check = Checkbutton(self, text = "This is a trusted, private computer.", var=self.trust)
+        check.grid(column=1,row=c,sticky='NW')
         c=c+1
         
         #Option for selecting password length
         label=Label(self,anchor="w",text="Password Length:")
-        label.grid(column=0, row=c,sticky='EW',padx=10, pady=5)
+        label.grid(column=0, row=c,sticky='EW', pady=5)
         self.pw_length = StringVar(self)
         self.pw_length.trace("w", self.update_record)
         self.lengthList = OptionMenu(self, self.pw_length, *['8','9','10','11','12','13','14','15','16'])
-        self.lengthList.grid(column=1, row=c, sticky='EW', padx=10, pady=5)
+        self.lengthList.grid(column=1, row=c, sticky='EW', pady=5)
         c=c+1
         
         #Textbox for allowable special characters
         self.chars = StringVar(self)
         self.chars.trace("w",self.update_record)
         label=Label(self,anchor="w",text="Allowed Special Characters:")
-        label.grid(column=0, row=c,sticky='EW',padx=10,pady=5)
+        label.grid(column=0, row=c,sticky='EW',pady=5)
         self.charsentry = Entry(self, textvariable=self.chars,width=32)
-        self.charsentry.grid(column=1,row=c,sticky='EW',padx=10,pady=5)
+        self.charsentry.grid(column=1,row=c,sticky='EW',pady=5)
         c=c+1
         
         #Buttons for drawing the map and copying the result to the clipboard
