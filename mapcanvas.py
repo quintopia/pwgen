@@ -76,6 +76,7 @@ class Dragged:
             #    nothing needs to be done and we will evaporate shortly.
             return
         if self.canvas==None and self.original_canvas<>None:
+            #Reinstate old copy (snap back to old location)
             self.canvas = self.original_canvas
             self.id = self.original_id
             self.canvas.itemconfig(self.id,state=NORMAL)
@@ -468,6 +469,8 @@ class CanvasDnd(Canvas):
             #position should be the position of the shadow
             try:
                 x,y,_,_=self.coords('shadow')
+                if x<0 or y<0:
+                    raise ValueError
             except ValueError:
                 #this either means there was no shadow when dropping, which means a Dragged entered above a
                 #non-empty square, which means we want to cancel our commitment to accept the drop
