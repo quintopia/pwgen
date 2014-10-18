@@ -479,6 +479,8 @@ class CanvasDnd(Canvas):
                 #to figure out which, we just check that its original_canvas is this one
                 if source.original_canvas is not None and source.original_canvas==self:
                     x,y=self.coords(source.id)
+                    x-=5
+                    y-=5
                 else:
                     self.dnd_leave(source,event)
                     return
