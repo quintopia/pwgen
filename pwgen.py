@@ -242,7 +242,7 @@ class pw_gen(Tk):
         label=Label(self,anchor="w",text="Website Name:")
         c=0
         #Option to select website
-        label.grid(column=0,row=c,sticky='EW',pady=5)
+        label.grid(column=0,row=c,sticky='EW',pady=5,padx=10)
         self.name = StringVar(self)
         self.name.trace("w", lambda *args: self.after_idle(self.update_fields, *args))
         self.prevname = ""
@@ -255,68 +255,68 @@ class pw_gen(Tk):
         self.editButton.pack(side=RIGHT)
         self.optionList = OptionMenu(self.box, self.name, *(sitelist))
         self.optionList.pack(fill=X)
-        self.box.grid(column=1,row=c,sticky='EW',pady=5)
+        self.box.grid(column=1,row=c,sticky='EW',pady=5,padx=10)
         c=c+1
         
         #Textbox for the domain name
         label=Label(self,anchor="w",text="Root Domain Name:")
-        label.grid(column=0, row=c,sticky='EW', pady=5)
+        label.grid(column=0, row=c,sticky='EW', pady=5, padx=10)
         self.domain = StringVar(self)
         self.domain.trace("w", self.update_record)
         self.domainentry = Entry(self, textvariable=self.domain)
-        self.domainentry.grid(column=1,row=c,sticky='EW', pady=5)
+        self.domainentry.grid(column=1,row=c,sticky='EW', pady=5, padx=10)
         c=c+1
         
         #Textbox for username
         label=Label(self,anchor="w",text="User Name:")
-        label.grid(column=0, row=c,sticky='EW', pady=5)
+        label.grid(column=0, row=c,sticky='EW', pady=5, padx=10)
         self.username = StringVar(self)
         self.username.trace("w", self.update_record)
         self.usernameentry = Entry(self,textvariable=self.username)
-        self.usernameentry.grid(column=1,row=c,sticky='EW', pady=5)
+        self.usernameentry.grid(column=1,row=c,sticky='EW', pady=5, padx=10)
         c=c+1
         
         #Textbox for password
         label=Label(self,anchor="w",text="Global Password:")
-        label.grid(column=0, row=c,sticky='EW', pady=5)
+        label.grid(column=0, row=c,sticky='EW', pady=5, padx=10)
         self.password = Entry(self,show='*')
-        self.password.grid(column=1, row=c,sticky='EW', pady=5)
+        self.password.grid(column=1, row=c,sticky='EW', pady=5, padx=10)
         c=c+1
         
         #Checkbutton for secure system
         self.trust = IntVar(self)
         check = Checkbutton(self, text = "This is a trusted, private computer.", var=self.trust)
-        check.grid(column=1,row=c,sticky='NW')
+        check.grid(column=1,row=c,sticky='NW', padx=10)
         c=c+1
         
         #Option for selecting password length
         label=Label(self,anchor="w",text="Password Length:")
-        label.grid(column=0, row=c,sticky='EW', pady=5)
+        label.grid(column=0, row=c,sticky='EW', pady=5, padx=10)
         self.pw_length = StringVar(self)
         self.pw_length.trace("w", self.update_record)
         self.lengthList = OptionMenu(self, self.pw_length, *['8','9','10','11','12','13','14','15','16'])
-        self.lengthList.grid(column=1, row=c, sticky='EW', pady=5)
+        self.lengthList.grid(column=1, row=c, sticky='EW', pady=5, padx=10)
         c=c+1
         
         #Textbox for allowable special characters
         self.chars = StringVar(self)
         self.chars.trace("w",self.update_record)
         label=Label(self,anchor="w",text="Allowed Special Characters:")
-        label.grid(column=0, row=c,sticky='EW',pady=5)
+        label.grid(column=0, row=c,sticky='EW',pady=5, padx=10)
         self.charsentry = Entry(self, textvariable=self.chars,width=32)
-        self.charsentry.grid(column=1,row=c,sticky='EW',pady=5)
+        self.charsentry.grid(column=1,row=c,sticky='EW',pady=5, padx=10)
         c=c+1
         
         #Buttons for drawing the map and copying the result to the clipboard
         self.getmap = Button(self, text="Draw Map", command=self.draw_map)
-        self.getmap.grid(column=0,row=c)
+        self.getmap.grid(column=0,row=c, ipadx=10)
         self.savepw = Button(self, text="Copy Password to Clipboard", command=self.gen_pw, state=DISABLED)
-        self.savepw.grid(column=1,row=c)
+        self.savepw.grid(column=1,row=c, ipadx=10)
         c=c+1
         
         #Canvas to draw the inventory
         self.inventory = Inventory(self,relief=RAISED,bd=2,height=62)
-        self.inventory.grid(column=0, row=c, columnspan=2, sticky='EW')
+        self.inventory.grid(column=0, row=c, columnspan=2)
         c=c+1
         
         #Canvas to draw the map
@@ -325,7 +325,7 @@ class pw_gen(Tk):
         self.gridscale = 40
         self.map = CanvasDnd(self, self.mapx, self.mapy, True,
                     width=self.gridscale*self.mapx, height=self.gridscale*self.mapy)
-        self.map.grid(column=0, row=c, columnspan=2, sticky='EW')
+        self.map.grid(column=0, row=c, columnspan=2)
         self.name.set(sitelist[0]) #pick the option LAST so that the call to update_fields works
         
         self.protocol("WM_DELETE_WINDOW",self.quit)
