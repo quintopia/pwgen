@@ -323,13 +323,17 @@ class CanvasDnd(Canvas):
         height = self.gridy*self.gridsize
         #six land images in four corners and then SE of the NW one and SW of the NE one
         #first, put the images in the four corners of the canvas
-        imageloc = [[0,0],
-                    [width - images[1].size[0],0],
-                    [0,height - images[2].size[1]],
-                    [width - images[3].size[0],height - images[3].size[1]],
-                    [images[0].size[0],images[0].size[1]],
-                    [width - images[1].size[0]-images[5].size[0],images[1].size[1]]]
-        
+        #sort by width to try to prevent initial overlap
+        images.sort(key = lambda x: x.size[0])
+        #smallest ones go NE and SW
+        nw,ne,sw,se,s,n = 5,0,1,3,2,4
+        imageloc = [[width - images[ne].size[0],0],                                                                            #NE
+                    [0,height - images[sw].size[1]],                                                                           #SW
+                    [width - images[se].size[0]-images[s].size[0],height - images[s].size[1]],                                 #S
+                    [width - images[se].size[0],height - images[se].size[1]],                                                  #SE
+                    [images[nw].size[0],0],                                                                                     #N
+                    [0,0]]                                                                                                     #NW
+
         
         #now, repeatedly
         for i in range(50):
@@ -344,21 +348,21 @@ class CanvasDnd(Canvas):
                 
                 #for each other image
                 for k in [x for x in xrange(len(images)) if x!=j]:
-                    #see if the kth one starts above where this one ends AND ends above where this one starts
-                    if imageloc[k][1]<(imageloc[j][1]+images[j].size[1]) and (imageloc[k][1]+images[k].size[1])>imageloc[j][1]:
+                    #see if the kth one starts above where this one ends AND ends below where this one starts
+                    if imageloc[k][1]<=(imageloc[j][1]+images[j].size[1]) and (imageloc[k][1]+images[k].size[1])>=imageloc[j][1]:
                         #if it's to the left, see if we need to reduce the leftmargin
-                        if imageloc[k][0] < imageloc[j][0] and imageloc[j][0]-(imageloc[k][0]+images[k].size[0])<margin[0]:
+                        if imageloc[k][0] <= imageloc[j][0] and imageloc[j][0]-(imageloc[k][0]+images[k].size[0])<=margin[0]:
                             margin[0] = imageloc[j][0]-(imageloc[k][0]+images[k].size[0])
                         #if it's to the right, see if we need to reduce the rightmargin
-                        if imageloc[k][0] > (imageloc[j][0]+images[j].size[0]) and imageloc[k][0]-(imageloc[j][0]+images[j].size[0])<margin[1]:
+                        if imageloc[k][0] >= (imageloc[j][0]+images[j].size[0]) and imageloc[k][0]-(imageloc[j][0]+images[j].size[0])<=margin[1]:
                             margin[1] = imageloc[k][0]-(imageloc[j][0]+images[j].size[0])
                     #see if the kth one starts to the left of where this one ends AND ends to the right of where this one starts 
-                    if imageloc[k][0]<(imageloc[j][0]+images[j].size[0]) and (imageloc[k][0]+images[k].size[0])>imageloc[j][0]:
+                    if imageloc[k][0]<=(imageloc[j][0]+images[j].size[0]) and (imageloc[k][0]+images[k].size[0])>=imageloc[j][0]:
                         #if it's above, see if we need to reduce the topmargin
-                        if imageloc[k][1]<imageloc[j][1] and imageloc[j][1]-(imageloc[k][1]+images[k].size[1])<margin[2]:
+                        if imageloc[k][1] <= imageloc[j][1] and imageloc[j][1]-(imageloc[k][1]+images[k].size[1])<=margin[2]:
                             margin[2] = imageloc[j][1]-(imageloc[k][1]+images[k].size[1])
                         #if it's below, see if we need to reduce the bottommargin
-                        if imageloc[k][1] > (imageloc[j][1]+images[j].size[1]) and imageloc[k][1]-(imageloc[j][1]+images[j].size[1])<margin[3]:
+                        if imageloc[k][1] >= (imageloc[j][1]+images[j].size[1]) and imageloc[k][1]-(imageloc[j][1]+images[j].size[1])<=margin[3]:
                             margin[3] = imageloc[k][1]-(imageloc[j][1]+images[j].size[1])
                             
                 #now, pick a direction for which the margin is positive
