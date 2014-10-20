@@ -238,7 +238,7 @@ class pw_gen(Tk):
         self.timer = self.after(60000,self.reset_map)
         
     def initialize(self):
-        self.resizable(0,0)
+
         label=Label(self,anchor="w",text="Website Name:")
         c=0
         #Option to select website
@@ -329,6 +329,7 @@ class pw_gen(Tk):
         self.name.set(sitelist[0]) #pick the option LAST so that the call to update_fields works
         
         self.protocol("WM_DELETE_WINDOW",self.quit)
+        self.resizable(0,0)
         
         
 if __name__ == "__main__":
